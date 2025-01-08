@@ -19,3 +19,4 @@ staticfiles/
 
 # Ignore media uploads (optional)
 media/
+db.sqlite3
