@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ news.title }}</title>
+</head>
+<body>
+    <h1>{{ news.title }}</h1>
+    <p>{{ news.content }}</p>
+    <p>Published: {{ news.published_date }}</p>
+    <p>Author: {{ news.author.username }}</p>
+    {% if user.user_type in "admin superuser" %}
+        <a href="{% url 'edit_news' news.id %}">Edit</a> |
+        <a href="{% url 'delete_news' news.id %}">Delete</a>
+    {% endif %}
+</body>
+</html>
