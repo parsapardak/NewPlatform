@@ -17,14 +17,13 @@ Including another URLconf
 
 from django.contrib import admin
 from django.urls import path, include
-from .views import homepage
+from news.views import NewsView
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
-    path('', homepage, name='homepage'),
-    path('accounts/', include('accounts.urls')),
+    path('', NewsView.as_view(), name='home'),
     path('news/', include('news.urls')),
+    path('accounts/', include('accounts.urls')),
     path('comments/', include('comments.urls')),
     path('likes/', include('likes.urls')),
-
+    path('admin/', admin.site.urls),
 ]

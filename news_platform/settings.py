@@ -62,7 +62,7 @@ ROOT_URLCONF = 'news_platform.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / 'templates'],  # پوشه اصلی قالب‌ها
+        'DIRS': [BASE_DIR / 'templates'],  # مسیر پوشه templates
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -74,6 +74,7 @@ TEMPLATES = [
         },
     },
 ]
+
 
 
 
@@ -138,5 +139,8 @@ STATIC_URL = 'static/'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
-
 AUTH_USER_MODEL = 'accounts.CustomUser'
+
+
+LOGIN_URL = '/accounts/login/'
+LOGOUT_REDIRECT_URL = '/'

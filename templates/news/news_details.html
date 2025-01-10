@@ -4,15 +4,59 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ news.title }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body>
-    <h1>{{ news.title }}</h1>
-    <p>{{ news.content }}</p>
-    <p>Published: {{ news.published_date }}</p>
-    <p>Author: {{ news.author.username }}</p>
-    {% if user.user_type in "admin superuser" %}
-        <a href="{% url 'edit_news' news.id %}">Edit</a> |
-        <a href="{% url 'delete_news' news.id %}">Delete</a>
-    {% endif %}
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="{% url 'news_list' %}">News Platform</a>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <h1 class="text-center">{{ news.title }}</h1>
+        <p><strong>Summary:</strong> {{ news.summary }}</p>
+        <p><strong>Author:</strong> {{ news.author.username }}</p>
+        <p><strong>Published Date:</strong> {{ news.published_date }}</p>
+        <p>{{ news.content }}</p>
+        
+        <div class="d-flex justify-content-between align-items-center mt-4">
+            <div>
+                <strong>Likes:</strong> {{ news.likes_count }}
+                {% if user.is_authenticated %}
+                    <form action="{% url 'like-news' news.id %}" method="post" style="display: inline;">
+                        {% csrf_token %}
+                        <button class="btn btn-sm btn-success">Like</button>
+                    </form>
+                    <form action="{% url 'unlike-news' news.id %}" method="post" style="display: inline;">
+                        {% csrf_token %}
+                        <button class="btn btn-sm btn-danger">Unlike</button>
+                    </form>
+                {% endif %}
+            </div>
+        </div>
+
+        <hr>
+        <h3>Comments:</h3>
+        <ul class="list-group">
+            {% for comment in comments %}
+                <li class="list-group-item">
+                    <strong>{{ comment.user.username }}:</strong> {{ comment.content }}
+                    <small class="text-muted">({{ comment.created_date }})</small>
+                </li>
+            {% endfor %}
+        </ul>
+
+        {% if user.is_authenticated %}
+            <form action="{% url 'add-comment' news.id %}" method="post" class="mt-4">
+                {% csrf_token %}
+                <textarea name="content" class="form-control" placeholder="Write a comment..."></textarea>
+                <button class="btn btn-primary mt-2">Add Comment</button>
+            </form>
+        {% else %}
+            <p class="text-muted">Please <a href="{% url 'login' %}">log in</a> to add a comment.</p>
+        {% endif %}
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

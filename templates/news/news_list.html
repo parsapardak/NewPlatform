@@ -3,10 +3,37 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>News List</title>
+    <title>News Platform</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        /* استایل کارت‌ها */
+        .news-card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            border: none;
+            overflow: hidden;
+        }
+        .news-card:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+        .news-card .card-title {
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+        .news-card .card-text {
+            color: #6c757d;
+        }
+        .btn-custom {
+            background-color: #007bff;
+            color: white;
+        }
+        .sort-dropdown {
+            margin-bottom: 20px;
+        }
+    </style>
 </head>
 <body>
+    <!-- Navigation Bar -->
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
         <div class="container-fluid">
             <a class="navbar-brand" href="/">News Platform</a>
@@ -15,7 +42,20 @@
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav me-auto">
-                    <li class="nav-item"><a class="nav-link" href="{% url 'create_news' %}">Create News</a></li>
+                    {% if user.is_authenticated %}
+                        <li class="nav-item">
+                            <form action="{% url 'logout' %}" method="post" style="display: inline;">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-link nav-link" style="color: white;">Logout</button>
+                            </form>
+                        </li>
+                        {% if user.user_type in 'admin superuser' %}
+                            <li class="nav-item"><a class="nav-link" href="{% url 'create_news' %}">Create News</a></li>
+                        {% endif %}
+                    {% else %}
+                        <li class="nav-item"><a class="nav-link" href="{% url 'login' %}">Login</a></li>
+                        <li class="nav-item"><a class="nav-link" href="{% url 'register' %}">Register</a></li>
+                    {% endif %}
                 </ul>
                 <form class="d-flex" method="get" action="{% url 'news_list' %}">
                     <input class="form-control me-2" type="search" name="search" placeholder="Search News">
@@ -25,35 +65,42 @@
         </div>
     </nav>
 
+    <!-- Main Content -->
     <div class="container mt-4">
-        <h1 class="text-center">News List</h1>
-        <div class="mb-3">
-            <a href="?sort=-published_date" class="btn btn-primary">Sort by Date</a>
-            <a href="?sort=likes" class="btn btn-primary">Sort by Likes</a>
+        <h1 class="text-center mb-4">Latest News</h1>
+        <!-- مرتب‌سازی به صورت Dropdown -->
+        <div class="d-flex justify-content-end sort-dropdown">
+            <select class="form-select w-auto" onchange="location = this.value;">
+                <option value="?sort=-published_date" {% if request.GET.sort == '-published_date' %}selected{% endif %}>Sort by Date</option>
+                <option value="?sort=likes" {% if request.GET.sort == 'likes' %}selected{% endif %}>Sort by Likes</option>
+            </select>
         </div>
-        <table class="table table-striped">
-            <thead>
-                <tr>
-                    <th>Title</th>
-                    <th>Author</th>
-                    <th>Likes</th>
-                    <th>Published Date</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for news in news %}
-                <tr>
-                    <td>{{ news.title }}</td>
-                    <td>{{ news.author.username }}</td>
-                    <td>{{ news.likes_count }}</td>
-                    <td>{{ news.published_date }}</td>
-                    <td><a href="{% url 'news_detail' news.id %}" class="btn btn-sm btn-info">Details</a></td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+
+        <!-- کارت‌های خبر -->
+        <div class="row">
+            {% for news in news %}
+            <div class="col-md-4">
+                <div class="card news-card">
+                    <div class="card-body">
+                        <h5 class="card-title">{{ news.title }}</h5>
+                        <p class="card-text">{{ news.summary|truncatechars:100 }}</p>
+                        <p class="card-text">
+                            <small class="text-muted">
+                                Likes: {{ news.likes.count }} | Comments: {{ news.comments_count }}
+                            </small>
+                        </p>
+                        <a href="{% url 'news_detail' news.id %}" class="btn btn-custom">Read More</a>
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <div class="col-12 text-center">
+                <p class="text-muted">No news available.</p>
+            </div>
+            {% endfor %}
+        </div>
     </div>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
