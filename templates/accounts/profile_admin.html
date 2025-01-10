@@ -1,0 +1,7 @@
+<div class="container mt-4">
+    <h1 class="text-center">Welcome Admin, {{ user.username }}</h1>
+    <p><strong>Email:</strong> {{ user.email }}</p>
+    <p><strong>Phone:</strong> {{ user.phone }}</p>
+    <p><strong>Number of News:</strong> {{ news_count }}</p>
+    <a href="{% url 'edit-profile' %}" class="btn btn-primary">Edit Profile</a>
+</div>

@@ -3,7 +3,10 @@ from django.http import JsonResponse
 from django.contrib.auth import authenticate, login
 from django.contrib.auth.hashers import make_password
 from django.views.decorators.csrf import csrf_exempt
+from django.contrib.auth.decorators import login_required
+from django.contrib import messages
 from .models import CustomUser
+from news.models import News
 import re  # برای بررسی فرمت شماره موبایل
 
 
@@ -67,3 +70,54 @@ def login_user(request):
 
     # بازگشت فرم در درخواست GET
     return render(request, 'accounts/login.html')
+
+
+@login_required
+def user_profile(request):
+    """
+    نمایش اطلاعات پروفایل کاربر
+    """
+    if request.user.user_type == 'superuser':
+        users = CustomUser.objects.all()
+        return render(request, 'accounts/profile_superuser.html', {'user': request.user, 'users': users})
+
+    elif request.user.user_type == 'admin':
+        news_count = News.objects.filter(author=request.user).count()
+        return render(request, 'accounts/profile_admin.html', {'user': request.user, 'news_count': news_count})
+
+    else:
+        return render(request, 'accounts/profile_user.html', {'user': request.user})
+
+
+@login_required
+def edit_profile(request):
+    """
+    ویرایش اطلاعات پروفایل کاربر
+    """
+    if request.method == 'POST':
+        user = request.user
+        user.username = request.POST.get('username', user.username)
+        user.email = request.POST.get('email', user.email)
+        user.phone = request.POST.get('phone', user.phone)
+
+        if 'password' in request.POST and request.POST['password']:
+            user.set_password(request.POST['password'])
+
+        user.save()
+        messages.success(request, 'Profile updated successfully!')
+        return redirect('user-profile')
+
+    return render(request, 'accounts/edit_profile.html', {'user': request.user})
+
+
+@login_required
+def manage_users(request):
+    """
+    مدیریت کاربران (مخصوص سوپر یوزرها)
+    """
+    if request.user.user_type != 'superuser':
+        messages.error(request, 'You do not have permission to access this page.')
+        return redirect('user-profile')
+
+    users = CustomUser.objects.all()
+    return render(request, 'accounts/manage_users.html', {'users': users})
