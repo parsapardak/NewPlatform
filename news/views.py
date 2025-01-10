@@ -66,6 +66,7 @@ def create_news(request):
 
     if request.method == 'POST':
         title = request.POST.get('title')
+        summary = request.POST.get('summary')
         content = request.POST.get('content')
 
         if not title or not content:
@@ -74,6 +75,7 @@ def create_news(request):
         try:
             news = News.objects.create(
                 title=title,
+                summary=summary,
                 content=content,
                 author=request.user
             )

@@ -5,58 +5,110 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ news.title }}</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .news-card {
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            border: none;
+            margin-bottom: 30px;
+            padding: 20px;
+            border-radius: 10px;
+        }
+        .like-section {
+            margin-top: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .comment-list {
+            margin-top: 20px;
+        }
+        .comment-item {
+            border-bottom: 1px solid #ccc;
+            padding: 10px 0;
+        }
+        .sort-dropdown {
+            margin-bottom: 20px;
+        }
+    </style>
 </head>
 <body>
+    <!-- Navigation Bar -->
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
         <div class="container-fluid">
             <a class="navbar-brand" href="{% url 'news_list' %}">News Platform</a>
         </div>
     </nav>
 
-    <div class="container mt-4">
-        <h1 class="text-center">{{ news.title }}</h1>
-        <p><strong>Summary:</strong> {{ news.summary }}</p>
-        <p><strong>Author:</strong> {{ news.author.username }}</p>
-        <p><strong>Published Date:</strong> {{ news.published_date }}</p>
-        <p>{{ news.content }}</p>
-        
-        <div class="d-flex justify-content-between align-items-center mt-4">
-            <div>
-                <strong>Likes:</strong> {{ news.likes_count }}
+    <!-- Back to Home Button -->
+    <div class="container mt-3">
+        <a href="{% url 'news_list' %}" class="btn btn-secondary mb-3">Back to News List</a>
+    </div>
+
+    <!-- News Content -->
+    <div class="container">
+        <div class="news-card">
+            <h1 class="text-center">{{ news.title }}</h1>
+            <p class="text-muted text-center"><strong>By:</strong> {{ news.author.username }} | <strong>Published:</strong> {{ news.published_date }}</p>
+            <p class="text-muted"><strong>Summary:</strong> {{ news.summary }}</p>
+            <p>{{ news.content }}</p>
+
+            <!-- Like Section -->
+            <div class="like-section">
+                <p><strong>Likes:</strong> {{ news.likes_count }}</p>
                 {% if user.is_authenticated %}
                     <form action="{% url 'like-news' news.id %}" method="post" style="display: inline;">
                         {% csrf_token %}
-                        <button class="btn btn-sm btn-success">Like</button>
+                        <button class="btn btn-sm btn-outline-success">Like</button>
                     </form>
                     <form action="{% url 'unlike-news' news.id %}" method="post" style="display: inline;">
                         {% csrf_token %}
-                        <button class="btn btn-sm btn-danger">Unlike</button>
+                        <button class="btn btn-sm btn-outline-danger">Unlike</button>
                     </form>
                 {% endif %}
             </div>
         </div>
 
+        <!-- Comments Section -->
         <hr>
-        <h3>Comments:</h3>
-        <ul class="list-group">
+        <div class="d-flex justify-content-between align-items-center">
+            <h3>Comments</h3>
+            <!-- Sort Dropdown -->
+            <div>
+                <select class="form-select w-auto" onchange="location = this.value;">
+                    <option value="?sort=newest" {% if request.GET.sort == 'newest' %}selected{% endif %}>Newest</option>
+                    <option value="?sort=oldest" {% if request.GET.sort == 'oldest' %}selected{% endif %}>Oldest</option>
+                </select>
+            </div>
+        </div>
+        <div class="comment-list">
             {% for comment in comments %}
-                <li class="list-group-item">
-                    <strong>{{ comment.user.username }}:</strong> {{ comment.content }}
-                    <small class="text-muted">({{ comment.created_date }})</small>
-                </li>
+            <div class="comment-item">
+                <strong>{{ comment.user.username|default:"Anonymous" }}:</strong> {{ comment.content }}
+                <small class="text-muted d-block">{{ comment.created_date }}</small>
+            </div>
+            {% empty %}
+            <p class="text-muted">No comments yet. Be the first to comment!</p>
             {% endfor %}
-        </ul>
+        </div>
 
+        <!-- Add Comment Form -->
         {% if user.is_authenticated %}
             <form action="{% url 'add-comment' news.id %}" method="post" class="mt-4">
                 {% csrf_token %}
-                <textarea name="content" class="form-control" placeholder="Write a comment..."></textarea>
-                <button class="btn btn-primary mt-2">Add Comment</button>
+                <textarea name="content" class="form-control mb-2" placeholder="Write a comment..."></textarea>
+                <div class="form-check mb-2">
+                    <input class="form-check-input" type="checkbox" name="anonymous" id="anonymous">
+                    <label class="form-check-label" for="anonymous">
+                        Post as Anonymous
+                    </label>
+                </div>
+                <button class="btn btn-primary">Add Comment</button>
             </form>
         {% else %}
             <p class="text-muted">Please <a href="{% url 'login' %}">log in</a> to add a comment.</p>
         {% endif %}
     </div>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
