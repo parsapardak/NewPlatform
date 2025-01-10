@@ -7,11 +7,22 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
         .news-card {
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
             border: none;
             margin-bottom: 30px;
-            padding: 20px;
+            padding: 30px;
             border-radius: 10px;
+            background-color: #fff;
+        }
+        .news-content p {
+            text-align: justify;
+            margin-bottom: 15px;
+        }
+        .admin-options {
+            margin-top: 20px;
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
         }
         .like-section {
             margin-top: 15px;
@@ -26,8 +37,28 @@
             border-bottom: 1px solid #ccc;
             padding: 10px 0;
         }
-        .sort-dropdown {
-            margin-bottom: 20px;
+        .reply-form {
+            margin-top: 10px;
+            padding-left: 20px;
+            border-left: 2px solid #ccc;
+        }
+        .replies {
+            margin-left: 20px;
+            padding-left: 20px;
+            border-left: 1px solid #ddd;
+        }
+        .alert-message {
+            margin-top: 15px;
+            text-align: center;
+        }
+        .modal-header-like {
+            background-color: #d4edda;
+        }
+        .modal-header-unlike {
+            background-color: #f8d7da;
+        }
+        .modal-header-comment {
+            background-color: #d1ecf1;
         }
     </style>
 </head>
@@ -47,10 +78,23 @@
     <!-- News Content -->
     <div class="container">
         <div class="news-card">
-            <h1 class="text-center">{{ news.title }}</h1>
-            <p class="text-muted text-center"><strong>By:</strong> {{ news.author.username }} | <strong>Published:</strong> {{ news.published_date }}</p>
+            <h1 class="text-center mb-3">{{ news.title }}</h1>
+            <p class="text-muted text-center">
+                <strong>By:</strong> {{ news.author.username }} |
+                <strong>Published:</strong> {{ news.published_date }}
+            </p>
             <p class="text-muted"><strong>Summary:</strong> {{ news.summary }}</p>
-            <p>{{ news.content }}</p>
+            <div class="news-content">
+                {{ news.content|linebreaks }}
+            </div>
+
+            <!-- Admin Options -->
+            {% if user.user_type in 'admin superuser' %}
+            <div class="admin-options">
+                <a href="{% url 'edit-news' news.id %}" class="btn btn-warning">Edit</a>
+                <a href="{% url 'delete-news' news.id %}" class="btn btn-danger">Delete</a>
+            </div>
+            {% endif %}
 
             <!-- Like Section -->
             <div class="like-section">
@@ -70,42 +114,45 @@
 
         <!-- Comments Section -->
         <hr>
-        <div class="d-flex justify-content-between align-items-center">
-            <h3>Comments</h3>
-            <!-- Sort Dropdown -->
-            <div>
-                <select class="form-select w-auto" onchange="location = this.value;">
-                    <option value="?sort=newest" {% if request.GET.sort == 'newest' %}selected{% endif %}>Newest</option>
-                    <option value="?sort=oldest" {% if request.GET.sort == 'oldest' %}selected{% endif %}>Oldest</option>
-                </select>
-            </div>
-        </div>
+        <h3>Comments</h3>
         <div class="comment-list">
             {% for comment in comments %}
             <div class="comment-item">
                 <strong>{{ comment.user.username|default:"Anonymous" }}:</strong> {{ comment.content }}
                 <small class="text-muted d-block">{{ comment.created_date }}</small>
+
+                <!-- Replies -->
+                <div class="replies">
+                    {% for reply in comment.replies.all %}
+                    <div class="comment-item">
+                        <strong>{{ reply.user.username|default:"Anonymous" }}:</strong> {{ reply.content }}
+                        <small class="text-muted d-block">{{ reply.created_date }}</small>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <!-- Reply Form -->
+                {% if user.is_authenticated %}
+                <form action="{% url 'add-reply' comment.id %}" method="post" class="reply-form">
+                    {% csrf_token %}
+                    <textarea name="content" class="form-control mb-2" placeholder="Reply to this comment..."></textarea>
+                    <button class="btn btn-sm btn-primary">Reply</button>
+                </form>
+                {% endif %}
             </div>
             {% empty %}
             <p class="text-muted">No comments yet. Be the first to comment!</p>
             {% endfor %}
         </div>
 
-        <!-- Add Comment Form -->
         {% if user.is_authenticated %}
-            <form action="{% url 'add-comment' news.id %}" method="post" class="mt-4">
-                {% csrf_token %}
-                <textarea name="content" class="form-control mb-2" placeholder="Write a comment..."></textarea>
-                <div class="form-check mb-2">
-                    <input class="form-check-input" type="checkbox" name="anonymous" id="anonymous">
-                    <label class="form-check-label" for="anonymous">
-                        Post as Anonymous
-                    </label>
-                </div>
-                <button class="btn btn-primary">Add Comment</button>
-            </form>
+        <form action="{% url 'add-comment' news.id %}" method="post" class="mt-4">
+            {% csrf_token %}
+            <textarea name="content" class="form-control mb-2" placeholder="Write a comment..."></textarea>
+            <button class="btn btn-primary">Add Comment</button>
+        </form>
         {% else %}
-            <p class="text-muted">Please <a href="{% url 'login' %}">log in</a> to add a comment.</p>
+        <p class="text-muted">Please <a href="{% url 'login' %}">log in</a> to add a comment.</p>
         {% endif %}
     </div>
 

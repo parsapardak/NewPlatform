@@ -1,50 +1,55 @@
-from django.shortcuts import get_object_or_404
-from django.http import JsonResponse
-from django.contrib.auth.decorators import login_required
-from django.utils.decorators import method_decorator
-from django.views import View
+from django.shortcuts import get_object_or_404, redirect
+from django.contrib import messages
 from .models import Comment
 from news.models import News
+from django.contrib.auth.decorators import login_required
 
+@login_required
+def add_comment(request, news_id):
+    """
+    ارسال نظر
+    """
+    news = get_object_or_404(News, pk=news_id)
+    content = request.POST.get('content')
 
-@method_decorator(login_required, name='dispatch')
-class CommentView(View):
-    def post(self, request, news_id):
-        """
-        ارسال نظر برای خبر
-        """
-        news = get_object_or_404(News, pk=news_id)
+    if not content or len(content.strip()) == 0:
+        messages.error(request, 'Comment content cannot be empty.')
+        return redirect('news_detail', pk=news.id)
 
-        # فقط کاربران ثبت‌نام‌شده مجاز به ارسال نظر هستند
-        if request.user.user_type != 'registered':
-            return JsonResponse({'error': 'Only registered users can comment'}, status=403)
+    if len(content) > 500:
+        messages.error(request, 'Comment content is too long (max 500 characters).')
+        return redirect('news_detail', pk=news.id)
 
-        content = request.POST.get('content')
+    Comment.objects.create(
+        news=news,
+        user=request.user,
+        content=content.strip()
+    )
+    messages.success(request, 'Your comment has been added.')
+    return redirect('news_detail', pk=news.id)
 
-        # بررسی محتوا
-        if not content or len(content.strip()) == 0:
-            return JsonResponse({'error': 'Comment content cannot be empty'}, status=400)
-        if len(content) > 500:
-            return JsonResponse({'error': 'Comment content is too long (max 500 characters)'}, status=400)
+@login_required
+def add_reply(request, comment_id):
+    """
+    ارسال پاسخ به نظر
+    """
+    parent_comment = get_object_or_404(Comment, pk=comment_id)
+    news = parent_comment.news
+    content = request.POST.get('content')
 
-        # ایجاد نظر
-        comment = Comment.objects.create(
-            news=news,
-            user=request.user,
-            content=content.strip()
-        )
-        return JsonResponse({'message': 'Comment added successfully!', 'id': comment.id}, status=201)
+    if not content or len(content.strip()) == 0:
+        messages.error(request, 'Reply content cannot be empty.')
+        return redirect('news_detail', pk=news.id)
 
-    def delete(self, request, comment_id):
-        """
-        حذف نظر
-        """
-        comment = get_object_or_404(Comment, pk=comment_id)
+    if len(content) > 500:
+        messages.error(request, 'Reply content is too long (max 500 characters).')
+        return redirect('news_detail', pk=news.id)
 
-        # فقط نویسنده یا ادمین‌ها می‌توانند نظر را حذف کنند
-        if request.user != comment.user and request.user.user_type not in ['admin', 'superuser']:
-            return JsonResponse({'error': 'Permission denied'}, status=403)
-
-        # حذف نظر
-        comment.delete()
-        return JsonResponse({'message': 'Comment deleted successfully!'})
+    Comment.objects.create(
+        news=news,
+        user=request.user,
+        content=content.strip(),
+        parent=parent_comment  # رابطه والد-فرزند
+    )
+    messages.success(request, 'Your reply has been added.')
+    return redirect('news_detail', pk=news.id)

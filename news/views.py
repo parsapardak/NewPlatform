@@ -46,6 +46,14 @@ class NewsDetailView(View):
         # دریافت خبر مورد نظر
         news = get_object_or_404(News, pk=pk)
 
+        # مرتب‌سازی نظرات
+        sort = request.GET.get('sort', 'newest')
+        if sort == 'oldest':
+            comments = Comment.objects.filter(news=news).order_by('created_date')
+        else:
+            comments = Comment.objects.filter(news=news).order_by('-created_date')
+
+    
         # دریافت نظرات مرتبط با خبر
         comments = Comment.objects.filter(news=news).order_by('-created_date')
 
@@ -84,3 +92,40 @@ def create_news(request):
             return render(request, 'news/create_news.html', {'error': f'Error creating news: {str(e)}'})
 
     return render(request, 'news/create_news.html')
+
+
+@login_required
+def delete_news(request, pk):
+    """
+    ویو برای حذف خبر (فقط توسط ادمین‌ها و سوپرکاربرها)
+    """
+    if request.user.user_type not in ['admin', 'superuser']:
+        return render(request, 'news/error.html', {'error': 'Permission denied'})
+
+    news = get_object_or_404(News, pk=pk)
+
+    if request.method == 'POST':
+        news.delete()
+        return redirect('news_list')
+
+    return render(request, 'news/confirm_delete.html', {'news': news})
+
+
+@login_required
+def edit_news(request, pk):
+    """
+    ویو برای ویرایش خبر (فقط توسط ادمین‌ها و سوپرکاربرها)
+    """
+    if request.user.user_type not in ['admin', 'superuser']:
+        return render(request, 'news/error.html', {'error': 'Permission denied'})
+
+    news = get_object_or_404(News, pk=pk)
+
+    if request.method == 'POST':
+        news.title = request.POST.get('title', news.title)
+        news.summary = request.POST.get('summary', news.summary)
+        news.content = request.POST.get('content', news.content)
+        news.save()
+        return redirect('news_detail', pk=news.id)
+
+    return render(request, 'news/edit_news.html', {'news': news})

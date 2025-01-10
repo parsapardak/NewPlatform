@@ -7,6 +7,7 @@ class Comment(models.Model):
     news = models.ForeignKey(News, related_name='comments', on_delete=models.CASCADE)
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
     content = models.TextField()
+    parent = models.ForeignKey('self', null=True, blank=True, related_name='replies', on_delete=models.CASCADE)
     created_date = models.DateTimeField(auto_now_add=True)
 
     class Meta:

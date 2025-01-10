@@ -8,14 +8,10 @@ class News(models.Model):
     content = models.TextField()
     published_date = models.DateTimeField(auto_now_add=True)
     author = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
-
+    likes_count = models.PositiveIntegerField(default=0) 
+    
     class Meta:
         ordering = ['-published_date']  # مرتب‌سازی پیش‌فرض نزولی بر اساس تاریخ انتشار
 
-
-
     def __str__(self):
         return self.title
-
-    def likes_count(self):
-        return self.likes.count()  # شمارش تعداد لایک‌ها
