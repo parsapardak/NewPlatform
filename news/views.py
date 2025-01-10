@@ -76,6 +76,7 @@ def create_news(request):
         title = request.POST.get('title')
         summary = request.POST.get('summary')
         content = request.POST.get('content')
+        image = request.FILES.get('image')
 
         if not title or not content:
             return render(request, 'news/create_news.html', {'error': 'All fields are required'})
@@ -85,7 +86,8 @@ def create_news(request):
                 title=title,
                 summary=summary,
                 content=content,
-                author=request.user
+                author=request.user,
+                image=image,           
             )
             return redirect('news_list')
         except Exception as e:

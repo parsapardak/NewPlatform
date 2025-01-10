@@ -9,7 +9,8 @@ class News(models.Model):
     published_date = models.DateTimeField(auto_now_add=True)
     author = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
     likes_count = models.PositiveIntegerField(default=0) 
-    
+    image = models.ImageField(upload_to='news_images/', blank=True, null=True)
+
     class Meta:
         ordering = ['-published_date']  # مرتب‌سازی پیش‌فرض نزولی بر اساس تاریخ انتشار
 
