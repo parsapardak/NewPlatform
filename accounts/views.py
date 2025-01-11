@@ -75,18 +75,31 @@ def login_user(request):
 @login_required
 def user_profile(request):
     """
-    نمایش اطلاعات پروفایل کاربر
+    نمایش اطلاعات پروفایل بر اساس نوع کاربر
     """
     if request.user.user_type == 'superuser':
+        # نمایش پروفایل سوپریوزر همراه با لیست کاربران
         users = CustomUser.objects.all()
-        return render(request, 'accounts/profile_superuser.html', {'user': request.user, 'users': users})
+        return render(request, 'accounts/profile_superuser.html', {
+            'user': request.user,
+            'users': users
+        })
 
     elif request.user.user_type == 'admin':
+        # نمایش پروفایل ادمین همراه با تعداد خبرهای منتشر شده
         news_count = News.objects.filter(author=request.user).count()
-        return render(request, 'accounts/profile_admin.html', {'user': request.user, 'news_count': news_count})
+        return render(request, 'accounts/profile_admin.html', {
+            'user': request.user,
+            'news_count': news_count
+        })
 
     else:
-        return render(request, 'accounts/profile_user.html', {'user': request.user})
+        # نمایش پروفایل کاربر عادی همراه با کامنت‌ها
+        user_comments = request.user.comment_set.all()  # کامنت‌های ثبت‌شده توسط کاربر
+        return render(request, 'accounts/profile_user.html', {
+            'user': request.user,
+            'user_comments': user_comments
+        })
 
 
 @login_required
