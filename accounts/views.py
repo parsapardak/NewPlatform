@@ -1,4 +1,4 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse
 from django.contrib.auth import authenticate, login
 from django.contrib.auth.hashers import make_password
@@ -80,9 +80,10 @@ def user_profile(request):
     if request.user.user_type == 'superuser':
         # نمایش پروفایل سوپریوزر همراه با لیست کاربران
         users = CustomUser.objects.all()
+
         return render(request, 'accounts/profile_superuser.html', {
             'user': request.user,
-            'users': users
+            'users': users,
         })
 
     elif request.user.user_type == 'admin':
@@ -125,11 +126,83 @@ def edit_profile(request):
 @login_required
 def manage_users(request):
     """
-    مدیریت کاربران (مخصوص سوپر یوزرها)
+    مدیریت کاربران (مخصوص سوپریوزرها)
     """
     if request.user.user_type != 'superuser':
         messages.error(request, 'You do not have permission to access this page.')
         return redirect('user-profile')
 
+    # جست‌وجو و فیلتر کاربران
+    query = request.GET.get('search', '')
+    user_type_filter = request.GET.get('user_type', '')
     users = CustomUser.objects.all()
-    return render(request, 'accounts/manage_users.html', {'users': users})
+
+    if query:
+        users = users.filter(username__icontains=query)
+
+    if user_type_filter:
+        users = users.filter(user_type=user_type_filter)
+
+    return render(request, 'accounts/manage_users.html', {
+        'users': users,
+        'search_query': query,
+        'user_type_filter': user_type_filter,
+    })
+
+
+
+@login_required
+def change_user_role(request, user_id):
+    """
+    تغییر نقش کاربر (مخصوص سوپریوزرها)
+    """
+    if request.user.user_type != 'superuser':
+        messages.error(request, 'You do not have permission to access this page.')
+        return redirect('user-profile')
+
+    user = get_object_or_404(CustomUser, id=user_id)
+
+    if request.method == 'POST':
+        new_role = request.POST.get('user_type')
+        if new_role in ['registered', 'admin', 'superuser']:
+            user.user_type = new_role
+            user.save()
+            messages.success(request, f'Role of {user.username} updated to {new_role}.')
+        else:
+            messages.error(request, 'Invalid role selected.')
+
+        return redirect('manage-users')
+
+    return render(request, 'accounts/change_user_role.html', {'user': user})
+
+
+@login_required
+def manage_users(request):
+    """
+    مدیریت کاربران (مخصوص سوپریوزرها)
+    """
+    if request.user.user_type != 'superuser':
+        messages.error(request, 'You do not have permission to access this page.')
+        return redirect('user-profile')
+
+    # دریافت مقادیر جستجو و فیلتر
+    query = request.GET.get('search', '')
+    user_type_filter = request.GET.get('user_type', '')
+
+    # کوئری اصلی کاربران
+    users = CustomUser.objects.all()
+
+    # اعمال فیلتر جستجو
+    if query:
+        users = users.filter(username__icontains=query)
+
+    # اعمال فیلتر نوع کاربر
+    if user_type_filter:
+        users = users.filter(user_type=user_type_filter)
+
+    # ارسال داده‌ها به قالب
+    return render(request, 'accounts/manage_users.html', {
+        'users': users,
+        'search_query': query,  # مقدار جستجو
+        'user_type_filter': user_type_filter,  # مقدار نوع کاربر
+    })
