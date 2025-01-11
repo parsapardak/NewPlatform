@@ -136,7 +136,7 @@ def edit_profile(request):
             user.set_password(request.POST['password'])
 
         user.save()
-        messages.success(request, 'Profile updated successfully!')
+        messages.success(request, 'Your profile has been updated successfully!')
         return redirect('user-profile')
 
     return render(request, 'accounts/edit_profile.html', {'user': request.user})
