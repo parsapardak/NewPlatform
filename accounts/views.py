@@ -86,11 +86,10 @@ def user_profile(request):
         })
 
     elif request.user.user_type == 'admin':
-        # نمایش پروفایل ادمین همراه با تعداد خبرهای منتشر شده
-        news_count = News.objects.filter(author=request.user).count()
+        admin_news = News.objects.filter(author=request.user)
         return render(request, 'accounts/profile_admin.html', {
             'user': request.user,
-            'news_count': news_count
+            'admin_news': admin_news,
         })
 
     else:
