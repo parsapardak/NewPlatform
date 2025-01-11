@@ -12,42 +12,57 @@ import re  # برای بررسی فرمت شماره موبایل
 
 def register_page(request):
     if request.method == 'POST':
-        # دریافت داده‌های فرم
         username = request.POST.get('username')
         password = request.POST.get('password')
+        confirm_password = request.POST.get('confirm_password')
+        email = request.POST.get('email')
         phone = request.POST.get('phone')
 
-        # بررسی اینکه هیچ فیلدی خالی نباشد
-        if not username or not password or not phone:
-            return render(request, 'accounts/register.html', {'error': 'All fields are required'})
+        # بررسی خالی نبودن فیلدها
+        if not username or not password or not confirm_password or not email or not phone:
+            messages.error(request, 'All fields are required.')
+            return redirect('register')
 
-        # بررسی فرمت شماره موبایل
-        if not re.match(r'^09\d{9}$', phone):
-            return render(request, 'accounts/register.html', {'error': 'Invalid phone number format'})
+        # بررسی تطابق رمز عبور
+        if password != confirm_password:
+            messages.error(request, 'Passwords do not match.')
+            return redirect('register')
 
-        # بررسی اینکه شماره موبایل تکراری نباشد
-        if CustomUser.objects.filter(phone=phone).exists():
-            return render(request, 'accounts/register.html', {'error': 'Phone number already exists'})
+        # بررسی فرمت ایمیل
+        if '@' not in email or '.' not in email:
+            messages.error(request, 'Invalid email address.')
+            return redirect('register')
 
-        # بررسی اینکه نام کاربری تکراری نباشد
+        # بررسی شماره تماس
+        if not phone.isdigit() or len(phone) != 11:
+            messages.error(request, 'Invalid phone number format.')
+            return redirect('register')
+
+        # بررسی یکتایی نام کاربری و ایمیل
         if CustomUser.objects.filter(username=username).exists():
-            return render(request, 'accounts/register.html', {'error': 'Username already exists'})
+            messages.error(request, 'Username already exists.')
+            return redirect('register')
+        if CustomUser.objects.filter(email=email).exists():
+            messages.error(request, 'Email already exists.')
+            return redirect('register')
 
         # ایجاد کاربر جدید
         try:
             user = CustomUser.objects.create(
                 username=username,
-                password=make_password(password),
+                email=email,
                 phone=phone,
-                user_type='registered'
+                password=make_password(password)
             )
             user.save()
-            return redirect('login')  # بازگشت به صفحه ورود
+            messages.success(request, 'Registration successful! Please log in.')
+            return redirect('login')
         except Exception as e:
-            return render(request, 'accounts/register.html', {'error': f'Error creating user: {str(e)}'})
+            messages.error(request, f'Error creating account: {str(e)}')
+            return redirect('register')
 
-    # بازگشت فرم در درخواست GET
     return render(request, 'accounts/register.html')
+
 
 
 def login_user(request):
@@ -58,18 +73,22 @@ def login_user(request):
 
         # بررسی اینکه هیچ فیلدی خالی نباشد
         if not username or not password:
-            return render(request, 'accounts/login.html', {'error': 'Both username and password are required'})
+            messages.error(request, 'Both username and password are required!')
+            return redirect('login')
 
         # احراز هویت کاربر
         user = authenticate(username=username, password=password)
         if user is not None:
             login(request, user)
-            return redirect('/')  # بازگشت به صفحه اصلی پس از لاگین
+            messages.success(request, f'Welcome back, {user.username}!')
+            return redirect('/')
         else:
-            return render(request, 'accounts/login.html', {'error': 'Invalid username or password'})
+            messages.error(request, 'Invalid username or password!')
+            return redirect('login')
 
     # بازگشت فرم در درخواست GET
     return render(request, 'accounts/login.html')
+
 
 
 @login_required
