@@ -176,33 +176,26 @@ def change_user_role(request, user_id):
     return render(request, 'accounts/change_user_role.html', {'user': user})
 
 
+
 @login_required
-def manage_users(request):
+def edit_user_profile(request, user_id):
     """
-    مدیریت کاربران (مخصوص سوپریوزرها)
+    ویرایش اطلاعات پروفایل سایر کاربران (فقط توسط سوپریوزر)
     """
     if request.user.user_type != 'superuser':
-        messages.error(request, 'You do not have permission to access this page.')
+        messages.error(request, 'You do not have permission to edit other users.')
         return redirect('user-profile')
 
-    # دریافت مقادیر جستجو و فیلتر
-    query = request.GET.get('search', '')
-    user_type_filter = request.GET.get('user_type', '')
+    user = get_object_or_404(CustomUser, id=user_id)
 
-    # کوئری اصلی کاربران
-    users = CustomUser.objects.all()
+    if request.method == 'POST':
+        user.username = request.POST.get('username', user.username)
+        user.email = request.POST.get('email', user.email)
+        user.phone = request.POST.get('phone', user.phone)
+        if 'password' in request.POST and request.POST['password']:
+            user.set_password(request.POST['password'])
+        user.save()
+        messages.success(request, f'{user.username}\'s profile updated successfully!')
+        return redirect('user-profile')
 
-    # اعمال فیلتر جستجو
-    if query:
-        users = users.filter(username__icontains=query)
-
-    # اعمال فیلتر نوع کاربر
-    if user_type_filter:
-        users = users.filter(user_type=user_type_filter)
-
-    # ارسال داده‌ها به قالب
-    return render(request, 'accounts/manage_users.html', {
-        'users': users,
-        'search_query': query,  # مقدار جستجو
-        'user_type_filter': user_type_filter,  # مقدار نوع کاربر
-    })
+    return render(request, 'accounts/edit_profile.html', {'user': user})
