@@ -7,69 +7,78 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
     <style>
-        /* Navbar styles */
-        .navbar .btn-link {
-            color: #dc3545; /* Red for logout */
+        /* General Styling */
+        body {
+            background-color: #f8f9fa;
         }
 
-        /* Card styles */
+        /* Navbar Styles */
+        .navbar {
+            background-color: #343a40;
+        }
+        .navbar .btn-link {
+            color: #dc3545;
+        }
+
+        /* News Card Styles */
         .news-card {
             position: relative;
             overflow: hidden;
             border: none;
-            border-radius: 10px;
-            color: white;
+            border-radius: 15px;
             text-align: center;
             transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
         .news-card:hover {
             transform: scale(1.05);
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
         }
-        .news-card .card-img-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
+        .news-card img {
             width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.5); /* Semi-transparent overlay */
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
-        }
-        .news-card .card-img {
-            width: 100%;
-            height: 100%;
+            height: 250px;
             object-fit: cover;
+            border-radius: 15px 15px 0 0;
+            filter: brightness(0.8);
         }
-
-        /* Icon and text for likes/comments */
-        .icon-text {
+        .news-card:hover img {
+            filter: brightness(1);
+        }
+        .news-card .card-body {
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 0 0 15px 15px;
+            position: relative;
+            z-index: 2;
+        }
+        .news-card .icon-text {
             display: flex;
+            justify-content: space-between;
             align-items: center;
-            justify-content: center;
-            gap: 10px;
+            margin-top: 10px;
+            font-size: 0.9rem;
+            color: #6c757d;
+        }
+        .news-card .icon-text i {
+            margin-right: 5px;
+        }
+        .news-card .btn {
             margin-top: 10px;
         }
-        .icon-text span {
-            font-size: 0.9rem;
-            color: #f8f9fa;
-        }
 
-        /* Dropdown menu for admin actions */
-        .dropdown-menu a {
-            color: #333;
-        }
-        .dropdown-menu a:hover {
-            background-color: #f8f9fa;
+        /* Footer Styles */
+        footer {
+            background-color: #343a40;
+            color: #fff;
+            text-align: center;
+            padding: 10px;
+            margin-top: 20px;
+            border-top: 3px solid #007bff;
         }
     </style>
 </head>
 <body>
     <!-- Navigation Bar -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <nav class="navbar navbar-expand-lg navbar-dark">
         <div class="container-fluid">
             <a class="navbar-brand" href="/">News Platform</a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
@@ -112,8 +121,9 @@
     <!-- Main Content -->
     <div class="container mt-4">
         <h1 class="text-center mb-4">Latest News</h1>
+
         <!-- Sorting Dropdown -->
-        <div class="d-flex justify-content-end sort-dropdown">
+        <div class="d-flex justify-content-end mb-3">
             <select class="form-select w-auto" onchange="location = this.value;">
                 <option value="?sort=-published_date" {% if request.GET.sort == '-published_date' %}selected{% endif %}>Sort by Date</option>
                 <option value="?sort=likes" {% if request.GET.sort == 'likes' %}selected{% endif %}>Sort by Likes</option>
@@ -126,18 +136,18 @@
             <div class="col-md-4 mb-4">
                 <div class="card news-card">
                     {% if news.image %}
-                        <img src="{{ news.image.url }}" class="card-img" alt="{{ news.title }}">
+                        <img src="{{ news.image.url }}" alt="{{ news.title }}">
                     {% else %}
-                        <img src="https://via.placeholder.com/300" class="card-img" alt="No Image Available">
+                        <img src="https://via.placeholder.com/300" alt="No Image Available">
                     {% endif %}
-                    <div class="card-img-overlay">
+                    <div class="card-body">
                         <h5 class="card-title">{{ news.title }}</h5>
                         <p class="card-text">{{ news.summary|truncatechars:100 }}</p>
                         <div class="icon-text">
-                            <i class="bi bi-hand-thumbs-up-fill"></i> <span>{{ news.likes.count }}</span>
-                            <i class="bi bi-chat-left-text-fill"></i> <span>{{ news.comments_count }}</span>
+                            <span><i class="bi bi-hand-thumbs-up-fill"></i> {{ news.likes.count }}</span>
+                            <span><i class="bi bi-chat-left-text-fill"></i> {{ news.comments_count }}</span>
                         </div>
-                        <a href="{% url 'news_detail' news.id %}" class="btn btn-light mt-3">Read More</a>
+                        <a href="{% url 'news_detail' news.id %}" class="btn btn-primary">Read More</a>
                     </div>
                 </div>
             </div>
@@ -148,6 +158,11 @@
             {% endfor %}
         </div>
     </div>
+
+    <!-- Footer -->
+    <footer>
+        <p>&copy; 2025 News Platform. All rights reserved.</p>
+    </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
