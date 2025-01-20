@@ -36,6 +36,13 @@
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
             margin-bottom: 30px;
         }
+        .like-section {
+            display: flex;
+            justify-content: flex-start;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
         .admin-options {
             display: flex;
             justify-content: flex-end;
@@ -94,6 +101,22 @@
             <h2>Content</h2>
             <div>{{ news.content|safe }}</div>
         </div>
+
+        <!-- Like Section -->
+        <div class="like-section">
+            <p><strong>Likes:</strong> {{ news.likes_count }}</p>
+            {% if user.is_authenticated %}
+                <form action="{% url 'like-news' news.id %}" method="post" style="display: inline;">
+                    {% csrf_token %}
+                    <button class="btn btn-outline-success">Like</button>
+                </form>
+                <form action="{% url 'unlike-news' news.id %}" method="post" style="display: inline;">
+                    {% csrf_token %}
+                    <button class="btn btn-outline-danger">Unlike</button>
+                </form>
+            {% endif %}
+        </div>
+
         {% if user.is_authenticated and user.user_type in 'admin superuser' %}
         <div class="admin-options">
             <a href="{% url 'edit-news' news.id %}" class="btn btn-warning">Edit</a>
